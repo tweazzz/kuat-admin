@@ -3,14 +3,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .models import MainPage, Footer, PartnersSection
-from .serializers import MainPageSerializer
+from .models import MainPage, Footer, PartnersSection, Request, ProductCategory, Product
+from .serializers import MainPageSerializer, RequestSerializer
 from .permissions import IsSuperAdmin
 from .serializers import (
     ChangePasswordSerializer,
     CreateEditorSerializer,
     MyTokenObtainPairSerializer,
-    UserReadSerializer, FooterSerializer,PartnersSectionSerializer
+    UserReadSerializer, FooterSerializer,PartnersSectionSerializer, ProductCategorySerializer, ProductCategorySimpleSerializer, ProductSerializer
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import IsSuperAdmin
@@ -209,3 +209,161 @@ class PartnersSectionView(APIView):
             {"detail": "Partners section deleted"},
             status=status.HTTP_204_NO_CONTENT,
         )
+    
+
+
+class RequestView(APIView):
+    """
+    POST   -> public (без токена)
+    GET    -> admin only
+    PUT    -> admin only
+    PATCH  -> admin only
+    """
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request):
+        queryset = Request.objects.all()
+        serializer = RequestSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = RequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def put(self, request, pk):
+        obj = Request.objects.get(pk=pk)
+        serializer = RequestSerializer(obj, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        obj = Request.objects.get(pk=pk)
+        serializer = RequestSerializer(obj, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+    
+
+
+# ------------------------------
+# ProductCategory API
+# ------------------------------
+class ProductCategoryView(APIView):
+    """GET -> public, POST/PUT/PATCH/DELETE -> admin"""
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        return ProductCategory.objects.prefetch_related("products").all()
+
+    def get(self, request):
+        queryset = self.get_queryset()
+        serializer = ProductCategorySerializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ProductCategorySerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ProductCategoryDetailView(APIView):
+    """GET -> public, PUT/PATCH/DELETE -> admin"""
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_object(self, pk):
+        return ProductCategory.objects.prefetch_related("products").get(pk=pk)
+
+    def get(self, request, pk):
+        obj = self.get_object(pk)
+        serializer = ProductCategorySerializer(obj, context={"request": request})
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        obj = self.get_object(pk)
+        serializer = ProductCategorySerializer(obj, data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        obj = self.get_object(pk)
+        serializer = ProductCategorySerializer(obj, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        obj = self.get_object(pk)
+        obj.delete()
+        return Response({"detail": "Category deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductCategorySimpleView(APIView):
+    """GET -> публичный список категорий без продуктов"""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        queryset = ProductCategory.objects.all()
+        serializer = ProductCategorySimpleSerializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
+
+
+# ------------------------------
+# Product API
+# ------------------------------
+class ProductView(APIView):
+    """GET -> public, POST/PUT/PATCH/DELETE -> admin"""
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        return Product.objects.select_related("category").all()
+
+    def get(self, request):
+        queryset = self.get_queryset()
+        serializer = ProductSerializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ProductSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def put(self, request, pk):
+        obj = Product.objects.get(pk=pk)
+        serializer = ProductSerializer(obj, data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        obj = Product.objects.get(pk=pk)
+        serializer = ProductSerializer(obj, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        obj = Product.objects.get(pk=pk)
+        obj.delete()
+        return Response({"detail": "Product deleted"}, status=status.HTTP_204_NO_CONTENT)

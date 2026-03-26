@@ -107,3 +107,58 @@ class Partner(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+
+
+class Request(models.Model):
+    first_name = models.CharField(max_length=120)
+    last_name = models.CharField(max_length=120)
+    company = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone = models.CharField(max_length=50)
+    address = models.CharField(max_length=255)
+    message = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_processed = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Request"
+        verbose_name_plural = "Requests"
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.company})"
+    
+
+
+class ProductCategory(models.Model):
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to="categories/", blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Product Category"
+        verbose_name_plural = "Product Categories"
+
+    def __str__(self):
+        return self.name
+
+
+class Product(models.Model):
+    category = models.ForeignKey(
+        ProductCategory,
+        on_delete=models.CASCADE,
+        related_name="products"
+    )
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to="products/")
+
+    class Meta:
+        verbose_name = "Product"
+        verbose_name_plural = "Products"
+
+    def __str__(self):
+        return self.name

@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import MainPage, Footer, PartnersSection, Partner
+from .models import MainPage, Footer, PartnersSection, Partner, Request, Product, ProductCategory
 
 User = get_user_model()
 
@@ -136,3 +136,34 @@ class PartnersSectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = PartnersSection
         fields = ("id", "title", "subtitle", "partners")
+
+
+
+class RequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Request
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "is_processed")
+
+
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ("id", "category", "name", "description", "image")
+
+
+class ProductCategorySerializer(serializers.ModelSerializer):
+    products = ProductSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ProductCategory
+        fields = ("id", "name", "description", "image", "products")
+
+
+class ProductCategorySimpleSerializer(serializers.ModelSerializer):
+    """Публичный список категорий без продуктов"""
+    class Meta:
+        model = ProductCategory
+        fields = ("id", "name", "description", "image")
