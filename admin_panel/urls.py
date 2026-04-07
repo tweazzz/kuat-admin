@@ -6,7 +6,8 @@ from .views import (
     CreateEditorView,
     MeView,
     MyTokenObtainPairView, MainPageView, FooterView, PartnersSectionView,
-    RequestView, ProductCategoryView, ProductCategoryDetailView, ProductCategorySimpleView, ProductView
+    RequestView, ProductCategoryView, ProductCategoryDetailView, ProductCategorySimpleView, ProductView,
+    PartnerView, PartnerDetailView
 )
 
 urlpatterns = [
@@ -17,7 +18,9 @@ urlpatterns = [
     path("api/change-password/", ChangePasswordView.as_view(), name="change_password"),
     path("api/main-page/", MainPageView.as_view()),
     path("api/footer/", FooterView.as_view(), name="footer"),
-    path("api/partners/", PartnersSectionView.as_view(), name="partners-section"),
+    path("api/partners-section/", PartnersSectionView.as_view(), name="partners-section"),
+    path("api/partners/", PartnerView.as_view(), name="partners"),
+    path("api/partners/<int:pk>/", PartnerDetailView.as_view(), name="partner-detail"),
     path("api/requests/", RequestView.as_view()),
     path("api/requests/<int:pk>/", RequestView.as_view()),
     path("api/categories/", ProductCategoryView.as_view(), name="categories"),

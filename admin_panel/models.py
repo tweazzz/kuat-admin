@@ -92,11 +92,6 @@ class PartnersSection(models.Model):
 
 
 class Partner(models.Model):
-    section = models.ForeignKey(
-        PartnersSection,
-        on_delete=models.CASCADE,
-        related_name="partners",
-    )
     name = models.CharField(max_length=120)
     url = models.URLField()
     logo = models.ImageField(upload_to="partners/")

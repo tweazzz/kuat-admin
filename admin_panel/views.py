@@ -3,14 +3,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .models import MainPage, Footer, PartnersSection, Request, ProductCategory, Product
+from .models import MainPage, Footer, PartnersSection, Request, ProductCategory, Product, Partner
 from .serializers import MainPageSerializer, RequestSerializer
 from .permissions import IsSuperAdmin
 from .serializers import (
     ChangePasswordSerializer,
     CreateEditorSerializer,
     MyTokenObtainPairSerializer,
-    UserReadSerializer, FooterSerializer,PartnersSectionSerializer, ProductCategorySerializer, ProductCategorySimpleSerializer, ProductSerializer
+    UserReadSerializer, FooterSerializer,PartnersSectionSerializer, ProductCategorySerializer, 
+    ProductCategorySimpleSerializer, ProductSerializer, PartnerSerializer
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import IsSuperAdmin
@@ -146,18 +147,10 @@ class FooterView(APIView):
     
 
 class PartnersSectionView(APIView):
-    """
-    GET    -> public
-    POST   -> Super Admin
-    PUT    -> Super Admin
-    PATCH  -> Super Admin
-    DELETE -> Super Admin
-    """
-
     def get_permissions(self):
         if self.request.method == "GET":
             return [AllowAny()]
-        return [IsAuthenticated(), IsSuperAdmin()]
+        return [IsAuthenticated()]
 
     def get_object(self):
         obj, _ = PartnersSection.objects.get_or_create(pk=1)
@@ -165,52 +158,82 @@ class PartnersSectionView(APIView):
 
     def get(self, request):
         section = self.get_object()
-        serializer = PartnersSectionSerializer(section, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = PartnersSectionSerializer(section)
+        return Response(serializer.data)
 
     def post(self, request):
         section = self.get_object()
-        serializer = PartnersSectionSerializer(
-            section,
-            data=request.data,
-            context={"request": request},
-        )
+        serializer = PartnersSectionSerializer(section, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def put(self, request):
         section = self.get_object()
-        serializer = PartnersSectionSerializer(
-            section,
-            data=request.data,
-            context={"request": request},
-        )
+        serializer = PartnersSectionSerializer(section, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data)
 
     def patch(self, request):
         section = self.get_object()
-        serializer = PartnersSectionSerializer(
-            section,
-            data=request.data,
-            partial=True,
-            context={"request": request},
-        )
+        serializer = PartnersSectionSerializer(section, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data)
+    
+class PartnerDetailView(APIView):
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
-    def delete(self, request):
-        section = self.get_object()
-        section.delete()
-        return Response(
-            {"detail": "Partners section deleted"},
-            status=status.HTTP_204_NO_CONTENT,
-        )
+    def get_object(self, pk):
+        return Partner.objects.get(pk=pk)
+
+    def get(self, request, pk):
+        obj = self.get_object(pk)
+        serializer = PartnerSerializer(obj, context={"request": request})
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        obj = self.get_object(pk)
+        serializer = PartnerSerializer(obj, data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        obj = self.get_object(pk)
+        serializer = PartnerSerializer(obj, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        obj = self.get_object(pk)
+        obj.delete()
+        return Response({"detail": "Partner deleted"}, status=status.HTTP_204_NO_CONTENT)
     
 
+
+class PartnerView(APIView):
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request):
+        queryset = Partner.objects.all().order_by("id")
+        serializer = PartnerSerializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = PartnerSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
 
 class RequestView(APIView):
     """

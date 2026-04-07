@@ -131,11 +131,9 @@ class PartnerSerializer(serializers.ModelSerializer):
 
 
 class PartnersSectionSerializer(serializers.ModelSerializer):
-    partners = PartnerSerializer(many=True, read_only=True)
-
     class Meta:
         model = PartnersSection
-        fields = ("id", "title", "subtitle", "partners")
+        fields = ("id", "title", "subtitle")
 
 
 
@@ -143,7 +141,7 @@ class RequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
         fields = "__all__"
-        read_only_fields = ("id", "created_at", "is_processed")
+        read_only_fields = ("id", "created_at")
 
 
 
